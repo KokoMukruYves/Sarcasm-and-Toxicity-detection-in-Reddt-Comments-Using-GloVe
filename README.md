@@ -32,9 +32,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import Pipeline
 
-###############################################################################
-# STREAMLIT PAGE CONFIG
-###############################################################################
+## STREAMLIT PAGE CONFIG
 st.set_page_config(page_title="Sarcasm & Toxicity Detector", page_icon="🛰️", layout="wide")
 st.title("🛰️ Sarcasm & Toxicity Detector")
 st.markdown(
@@ -47,7 +45,7 @@ st.markdown(
     """
 )
 
-# ---- Session State Initialization
+ ---- Session State Initialization
 needed_keys = {
     "glove_vectors": None, "glove_dim": None,
     "model_lr": None, "model_dt": None,
@@ -60,9 +58,8 @@ for k, v in needed_keys.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
-###############################################################################
-# HELPERS
-###############################################################################
+#### Removal of stop words
+
 _url_re = re.compile(r"http[s]?://\S+|www\.\S+", flags=re.IGNORECASE)
 _non_alnum_re = re.compile(r"[^a-z0-9'\s]+")
 
@@ -149,11 +146,7 @@ def toxicity_score(text: str) -> float:
         return 0.0
     hits = sum(1 for t in toks if t in TOXIC_LEXICON)
     return hits / max(3, len(toks))
-
-
-###############################################################################
-# SIDEBAR — FILES & CONTROLS
-###############################################################################
+    
 st.sidebar.header("Upload files")
 dataset_file = st.sidebar.file_uploader("Kaggle Sarcasm JSON/JSONL", type=["json", "jsonl"])
 
@@ -166,9 +159,6 @@ glove_file = st.sidebar.file_uploader(
 seed = st.sidebar.number_input("Random seed", value=42, step=1)
 do_train = st.sidebar.button("Train models", type="primary")
 
-###############################################################################
-# DATA PREVIEW
-###############################################################################
 st.subheader("Feature Selection")
 if st.checkbox('Show the clean data and Check for class imbalance'):
     if dataset_file:
@@ -186,10 +176,8 @@ if st.checkbox('Show the clean data and Check for class imbalance'):
         st.pyplot(fig)
     else:
         st.info("Upload the dataset to continue.")
-
-###############################################################################
-# TRAIN & EVALUATE
-###############################################################################
+        
+## Train and evaluate the performance of the model
 st.subheader("Training and Evaluation of the model")
 if st.checkbox('Model Training and Evaluation'):
     if st.checkbox('Classification Report'):
@@ -312,7 +300,7 @@ if st.checkbox('Model Training and Evaluation'):
                 ax2.set_title("Decision Tree — Confusion Matrix")
                 st.pyplot(fig_cm2)
 
-            # ------------------------ Hyperparameter tuning (optional) -----------------
+             ------------------------ Hyperparameter tuning (optional) -----------------
             if st.checkbox("Hyperparameter tuning"):
                 # Safe keys for training data
                 need_keys_hp = ["X_train", "y_train"]
@@ -359,9 +347,8 @@ if st.checkbox('Model Training and Evaluation'):
                     st.session_state["best_model"] = best_clf
                     st.session_state["best_model_name"] = type(best_clf).__name__
 
-###############################################################################
-# INTERACTIVE PREDICTION  — always use the most accurate model
-###############################################################################
+#### Toxicity prediction based on the best model
+
 st.subheader("Make Prediction")
 
 if st.checkbox('Make prediction on unseen data'):
@@ -466,17 +453,4 @@ if st.checkbox('Make prediction on unseen data'):
                 )
             except Exception as e:
                 st.error(f"Error processing file: {e}")
-
-    with st.expander("How to present this app"):
-        st.markdown(
-            """
-1. **Data**: preview + class balance.  
-2. **Embeddings**: GloVe averaging for sentence vectors.  
-3. **Models**: LR vs DT, then **Auto-pick best** (tuned if available, else best ROC-AUC).  
-4. **Metrics**: Precision/Recall/F1 + ROC-AUC, show ROC & confusion matrices.  
-5. **Demo**: input headline → prediction using the **most accurate** model.  
-6. **Limits**: averaging loses word order; toxicity heuristic is simplistic.
-            """
-        )
-
 
